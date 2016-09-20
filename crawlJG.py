@@ -309,7 +309,7 @@ class Mail:
 
 if __name__ == '__main__':
 
-    crawler = CrawlJG(DB('127.0.0.1',   'root', '', 'video_jg'), Mail('smtp.163.com', 'whutwf18', 'XiaoFeiRen18'))
+    crawler = CrawlJG(DB('127.0.0.1',   'root', '', 'video_jg'), Mail('smtp.163.com', '*****', '****'))
     start = time.clock()
     videoUrls = crawler.startCrawlJG()
     crawler.writeAndEmail(videoUrls)
