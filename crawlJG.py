@@ -317,7 +317,7 @@ if __name__ == '__main__':
     end = time.clock()
     print end - start
     if len(ugradeVideos) > 0:
-        mail = Mail('smtp.163.com', 'whutwf18', 'XiaoFeiRen18')
+        mail = Mail('smtp.163.com', '***', '***')
         mail.sender(mail.msgTmpl(ugradeVideos), ['1720938946@qq.com'], '金光布袋戏更新喽')
     else:
         print '金光布袋戏还没有更细，耐心等待新'
