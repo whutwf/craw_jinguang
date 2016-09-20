@@ -12,9 +12,9 @@ import time
 class CrawlJG:
 
 
-    def __init__(self, db, mail):
+    def __init__(self, db):
         self.db = db
-        self.mail = mail
+        self.ugradeVideos = []
         self.userAgent = [
             'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
             'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
@@ -146,16 +146,15 @@ class CrawlJG:
 
         return episodeVideoLists
 
-    def writeAndEmail(self, episodeVideoLists):
+    def writeToDB(self, episodeVideoLists):
 
-        exitVideoNames = self.db.fetchAll('select `name` from `video_name`')
-        topVideoName = exitVideoNames[0]['name'] if len(exitVideoNames) > 0 else None
+        exitVideoNames = self.db.fetchAll('select `md5_name` from `video_name`')
+        topVideoMd5Name = exitVideoNames[0]['md5_name'] if len(exitVideoNames) > 0 else None
         exitEpisodeUrls = self.db.fetchAll('select `url` from `episode_details`')
         topEpisodeUrl = exitEpisodeUrls[0]['url'] if len(exitEpisodeUrls) > 0 else None
 
-        lateIndex = 0
         for video in episodeVideoLists:
-            if video['name'] != topVideoName:
+            if topVideoMd5Name != hashlib.md5(video['name']).hexdigest():
                 self.db.insert('video_name', {
                     'name_id' : video['name_id'],
                     'name' : video['name'],
@@ -166,10 +165,10 @@ class CrawlJG:
             for detail in video['details']:
                 if detail['url'] != topEpisodeUrl:
                     self.db.insert('episode_details', detail)
-                    if lateIndex < 3:
-                        msg = self.mail.msgTmpl(detail['episode'], detail['url'])
-                        self.mail.sender(msg, ['1720938946@qq.com'], '金光布袋戏更新呢,快来看')
-                        lateIndex += 1
+                    self.ugradeVideos.append(detail)
+                else:
+                    return self.ugradeVideos
+
 
 class DB:
     def __init__(self, DB_HOST,  DB_USER, DB_PWD, DB_NAME, DB_PORT=3306, DB_CHARSET='utf-8'):
@@ -244,7 +243,29 @@ class DB:
             print "Insert Data Error %s\nSQL:%s" % (e, sqlString)
             self.conn.rollback()
             return False
-            
+
+    # #转化查询结果为列表Sqlr
+    # def fetchAll(self):
+    #     result=self.cur.fetchall()
+    #     desc =self.cur.description
+    #     d = []
+    #     for inv in result:
+    #         print len(inv)
+    #         _d = {}
+    #         for i in range(0, len(inv)):
+    #             print i
+    #     #         _d[desc[i][0]] = str(inv[i])
+    #     #     d.append(_d)
+    #     # return d
+    #
+    #
+    # def update(self, sqlString):
+    #     cursor=self.conn.cursor()
+    #     cursor.execute(sqlString)
+    #     self.conn.commit()
+    #     cursor.close()
+    #     self.conn.close()
+
 class Mail:
     def __init__(self, MAIL_HOST,  MAIL_USER, MAIL_PWD, MAIL_POSTFIX='163.com', MAIL_PORT=25):
         self.MAIL_HOST = MAIL_HOST
@@ -281,15 +302,22 @@ class Mail:
             return False
 
     #简单信息模板
-    def msgTmpl(self, episode, url):
-        msg = '<p>更新喽，还不赶紧去看看</p><p><a href="' + url + '"><span>' + episode + '</span></a></p>'
+    def msgTmpl(self, videoList):
+        msg = '<p>更新了' + str(len(videoList)) +'集，还不赶紧去看看</p>'
+        for video in videoList:
+            msg += '<p><a href="' + video['url'] + '"><span>' + video['episode'] + '</span></a></p>'
         return msg
 
 if __name__ == '__main__':
 
-    crawler = CrawlJG(DB('127.0.0.1',   'root', '', 'video_jg'), Mail('smtp.163.com', '*****', '****'))
+    crawler = CrawlJG(DB('127.0.0.1',   'root', '', 'video_jg'))
     start = time.clock()
     videoUrls = crawler.startCrawlJG()
-    crawler.writeAndEmail(videoUrls)
+    ugradeVideos = crawler.writeToDB(videoUrls)
     end = time.clock()
     print end - start
+    if len(ugradeVideos) > 0:
+        mail = Mail('smtp.163.com', 'whutwf18', 'XiaoFeiRen18')
+        mail.sender(mail.msgTmpl(ugradeVideos), ['1720938946@qq.com'], '金光布袋戏更新喽')
+    else:
+        print '金光布袋戏还没有更细，耐心等待新'
