@@ -244,29 +244,7 @@ class DB:
             print "Insert Data Error %s\nSQL:%s" % (e, sqlString)
             self.conn.rollback()
             return False
-
-    # #转化查询结果为列表Sqlr
-    # def fetchAll(self):
-    #     result=self.cur.fetchall()
-    #     desc =self.cur.description
-    #     d = []
-    #     for inv in result:
-    #         print len(inv)
-    #         _d = {}
-    #         for i in range(0, len(inv)):
-    #             print i
-    #     #         _d[desc[i][0]] = str(inv[i])
-    #     #     d.append(_d)
-    #     # return d
-    #
-    #
-    # def update(self, sqlString):
-    #     cursor=self.conn.cursor()
-    #     cursor.execute(sqlString)
-    #     self.conn.commit()
-    #     cursor.close()
-    #     self.conn.close()
-
+            
 class Mail:
     def __init__(self, MAIL_HOST,  MAIL_USER, MAIL_PWD, MAIL_POSTFIX='163.com', MAIL_PORT=25):
         self.MAIL_HOST = MAIL_HOST
